@@ -5,6 +5,9 @@
         "Name": "B6 (xfwm4)"
     },
     "org.kde.kdecoration3": {
+        "defaultTheme": "b6+r",
+        "themeListKeyword": "themes",
+        "themes": true,
         "blur": false,
         "recommendedBorderSize": "None",
         "styles": [
