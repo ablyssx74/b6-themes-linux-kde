@@ -18,11 +18,6 @@ add_executable(b6-preview tools/preview.cpp)
 target_link_libraries(b6-preview PRIVATE b6core)
 
 # the KWin decoration plugin (Plasma 6): built when KDecoration3 is installed
-find_package(ECM QUIET NO_MODULE)
-if(ECM_FOUND)
-    list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
-    include(KDEInstallDirs6 OPTIONAL)
-endif()
 find_package(KDecoration3 CONFIG QUIET)
 find_package(KF6CoreAddons CONFIG QUIET)
 if(KDecoration3_FOUND AND KF6CoreAddons_FOUND)
@@ -33,7 +28,9 @@ if(KDecoration3_FOUND AND KF6CoreAddons_FOUND)
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugins/org.kde.kdecoration3)
     # the factory macro carries the plugin's metadata (b6decoration.json), which moc has to see
     set_property(TARGET org.kde.b6xfwm APPEND PROPERTY AUTOMOC_MACRO_NAMES "K_PLUGIN_FACTORY_WITH_JSON")
-    install(TARGETS org.kde.b6xfwm DESTINATION ${KDE_INSTALL_QTPLUGINDIR}/org.kde.kdecoration3)
+    # where Qt looks for plugins on this system (/usr/lib/qt6/plugins), from Qt itself: no KDE build tools needed
+    set(B6_PLUGIN_DIR "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
+    install(TARGETS org.kde.b6xfwm DESTINATION "${B6_PLUGIN_DIR}/org.kde.kdecoration3")
 else()
     message(STATUS "KDecoration3 or KF6CoreAddons not found: the plugin is not built (the preview tool is)")
 endif()
