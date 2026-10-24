@@ -9,6 +9,13 @@ themes (`XfwmDecorator`), so a window looks the same on both.
 Maximized windows are the bar alone, flush with the screen. The menu, "on all desktops", shade, minimize, maximize and close buttons
 are all there when the theme has pictures for them.
 
+## Wayland and X11
+The plugin is a KDecoration3 plugin, so it works in the KWin of a Wayland session and in the KWin of an X11 session (tried with
+`kwin_x11` of Plasma 6.3 on Debian 13). Plasma 6.8 has no X11 session any more.
+
+On **Xfce** no plugin is needed: these are xfwm4 themes. Copy a theme folder (the one with the `themerc` in it) to
+`~/.themes/<name>/xfwm4/` and pick it in Settings, Window Manager.
+
 ## Parts
 - `src/` &ndash; theme loading and frame drawing. Qt Gui only, no KDE.
 - `tools/preview.cpp` &ndash; `b6-preview <theme folder> <out.png> [scale]` draws frames (active, inactive, long titles, hover,
