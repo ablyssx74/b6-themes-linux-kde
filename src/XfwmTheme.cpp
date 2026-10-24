@@ -3,6 +3,8 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QRegularExpression>
+#include <QHash>
 #include <QTextStream>
 
 namespace B6 {
@@ -24,6 +26,52 @@ static QRect opaqueBounds(const QImage& image)
 	return right < 0 ? QRect() : QRect(left, top, right - left + 1, bottom - top + 1);
 }
 
+static bool darkColor(const QColor& color)
+{
+	return color.isValid() && color.lightnessF() < 0.5;
+}
+
+// An XPM names some of its colors ("c #EEEEE6 s active_color_2"): the window color, its highlight, its mid tone and its shadow.
+// The shades keep their distance from the window color, scaled to the user's own.
+void XfwmTheme::recolor(QImage& image, const QString& path) const
+{
+	if (!darkColor(fWindow) || !fReference)
+		return;
+	QFile file(path);
+	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+		return;
+	static const QRegularExpression named("c #([0-9A-Fa-f]{6}) s [a-z]+_(color|hilight|mid|shadow)_");
+	QHash<QRgb, QRgb> map;
+	const QRgb base = fWindow.rgb();
+	const QRgb reference = fReference;
+	QTextStream stream(&file);
+	while (!stream.atEnd()) {
+		const auto match = named.match(stream.readLine());
+		if (!match.hasMatch())
+			continue;
+		const QRgb original = QColor("#" + match.captured(1)).rgb();
+		auto channel = [](int o, int r, int b) {
+			if (o <= r)
+				return r > 0 ? b * o / r : b;
+			return b + (255 - b) * (o - r) / (255 - r);
+		};
+		map[original] = qRgb(channel(qRed(original), qRed(reference), qRed(base)),
+			channel(qGreen(original), qGreen(reference), qGreen(base)),
+			channel(qBlue(original), qBlue(reference), qBlue(base)));
+	}
+	if (map.isEmpty())
+		return;
+	image = image.convertToFormat(QImage::Format_ARGB32);
+	for (int y = 0; y < image.height(); y++) {
+		QRgb* row = reinterpret_cast<QRgb*>(image.scanLine(y));
+		for (int x = 0; x < image.width(); x++) {
+			const auto found = map.constFind(row[x] | 0xff000000);
+			if (found != map.constEnd() && qAlpha(row[x]) == 255)
+				row[x] = found.value();
+		}
+	}
+}
+
 bool XfwmTheme::loadPiece(Piece& piece, const QString& baseName) const
 {
 	// xfwm4 takes a picture in either format; the PNG, when there is one, is the newer
@@ -34,6 +82,8 @@ bool XfwmTheme::loadPiece(Piece& piece, const QString& baseName) const
 		QImage image(path);
 		if (image.isNull())
 			continue;
+		if (extension[1] == 'x')
+			recolor(image, path);
 		piece.image = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
 		QImage straight = image.convertToFormat(QImage::Format_ARGB32);
 		piece.opaque = opaqueBounds(straight);
@@ -50,6 +100,21 @@ bool XfwmTheme::load(const QString& directory)
 	if (!QFileInfo(directory + "/themerc").exists())
 		return false;
 	readThemerc(directory + "/themerc");
+	if (darkColor(fWindow)) {
+		fReference = 0;
+		static const QRegularExpression color2("c #([0-9A-Fa-f]{6}) s active_color_2");
+		const QFileInfoList files = QDir(directory).entryInfoList({"*.xpm"}, QDir::Files);
+		for (const QFileInfo& info : files) {
+			QFile file(info.filePath());
+			if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+				continue;
+			const auto match = color2.match(QString::fromLatin1(file.readAll()));
+			if (match.hasMatch()) {
+				fReference = QColor("#" + match.captured(1)).rgb();
+				break;
+			}
+		}
+	}
 
 	static const char* const states[2] = {"active", "inactive"};
 	for (int s = 0; s < 2; s++) {

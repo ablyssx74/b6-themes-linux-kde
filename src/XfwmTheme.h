@@ -28,6 +28,9 @@ struct Piece {
 
 class XfwmTheme {
 public:
+	// The window color of the user's color scheme. When it is dark, the colors the pictures name (xfwm4's active_color_2,
+	// active_hilight_2 and so on) take their shade from it; with a light one the theme looks as drawn.
+	void setWindowColor(const QColor& window) { fWindow = window; }
 	bool load(const QString& directory);
 	bool isValid() const { return fValid; }
 	const QString& name() const { return fName; }
@@ -67,8 +70,11 @@ public:
 private:
 	bool loadPiece(Piece& piece, const QString& baseName) const;
 	void readThemerc(const QString& path);
+	void recolor(QImage& image, const QString& path) const;
 
 	bool fValid = false;
+	QColor fWindow;
+	QRgb fReference = 0;	// the theme's own color_2, what the window color stands for
 	QString fDirectory;
 	QString fName;
 	Piece fTopLeft[2], fTopRight[2], fTitle[5][2], fLeft[2], fRight[2], fBottom[2], fBottomLeft[2], fBottomRight[2];

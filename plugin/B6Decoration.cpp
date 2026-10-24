@@ -93,6 +93,7 @@ bool Decoration::init()
 			directory = themeDirectory(fThemeName);
 		}
 	}
+	fTheme.setWindowColor(window()->color(QPalette::Active, QPalette::Window));
 	if (directory.isEmpty() || !fTheme.load(directory)) {
 		qWarning("b6xfwm: no theme \"%s\" found in the data folders (b6-themes/<name>/themerc) or in B6_THEMES_PATH",
 			qPrintable(fThemeName));
@@ -115,6 +116,11 @@ bool Decoration::init()
 
 	KDecoration3::DecoratedWindow* w = window();
 	connect(w, &KDecoration3::DecoratedWindow::activeChanged, this, [this]() { update(); });
+	connect(w, &KDecoration3::DecoratedWindow::paletteChanged, this, [this]() {
+		fTheme.setWindowColor(window()->color(QPalette::Active, QPalette::Window));
+		fTheme.load(themeDirectory(fThemeName));
+		update();
+	});
 	connect(w, &KDecoration3::DecoratedWindow::captionChanged, this, &Decoration::updateLayout);
 	connect(w, &KDecoration3::DecoratedWindow::sizeChanged, this, &Decoration::updateLayout);
 	connect(w, &KDecoration3::DecoratedWindow::maximizedChanged, this, &Decoration::updateLayout);
