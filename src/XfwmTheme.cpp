@@ -35,8 +35,29 @@ static bool darkColor(const QColor& color)
 // The shades keep their distance from the window color, scaled to the user's own.
 void XfwmTheme::recolor(QImage& image, const QString& path) const
 {
-	if (!darkColor(fWindow) || !fReference)
+	if (!darkColor(fWindow))
 		return;
+	if (!fReference) {
+		// a theme that names no colors (crux): the greys of its borders are scaled to the window color, white becoming that color
+		const QString name = QFileInfo(path).fileName();
+		if (!name.startsWith("left-") && !name.startsWith("right-") && !name.startsWith("bottom-"))
+			return;
+		image = image.convertToFormat(QImage::Format_ARGB32);
+		const QRgb base = fWindow.rgb();
+		for (int y = 0; y < image.height(); y++) {
+			QRgb* row = reinterpret_cast<QRgb*>(image.scanLine(y));
+			for (int x = 0; x < image.width(); x++) {
+				const QRgb pixel = row[x];
+				const int low = qMin(qRed(pixel), qMin(qGreen(pixel), qBlue(pixel)));
+				const int high = qMax(qRed(pixel), qMax(qGreen(pixel), qBlue(pixel)));
+				if (qAlpha(pixel) == 0 || high - low > 24)
+					continue;
+				row[x] = qRgba(qRed(base) * qRed(pixel) / 255, qGreen(base) * qGreen(pixel) / 255, qBlue(base) * qBlue(pixel) / 255,
+					qAlpha(pixel));
+			}
+		}
+		return;
+	}
 	QFile file(path);
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
 		return;
