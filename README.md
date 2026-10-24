@@ -25,7 +25,7 @@ cmake --build build
 The plugin is built when `KDecoration3` and `KF6CoreAddons` are found.
 
 ## Themes
-The theme pictures are **not** in this repository: `themes/` is ignored. Take them from the xfwm4-themes collection (GPL-3). A theme is a folder with a `themerc`.A theme is a folder with a `themerc`. The plugin lists every one it finds in:
+The theme pictures are **not** in this repository: `themes/` is ignored. Take them from the xfwm4-themes collection (GPL-3). A theme is a folder with a `themerc`. The plugin lists every one it finds in:
 
 - `~/.local/share/b6-themes/<name>` and `/usr/share/b6-themes/<name>`, and
 - the folders in `B6_THEMES_PATH` (a colon separated list), for trying themes without installing them.
