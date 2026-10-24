@@ -5,6 +5,7 @@
 #include <KPluginFactory>
 
 #include <QDir>
+#include <QFileInfo>
 #include <QPainter>
 #include <QStandardPaths>
 
@@ -24,19 +25,23 @@ Decoration::Decoration(QObject* parent, const QVariantList& args)
 {
 }
 
+// The folder of the theme: B6_THEME_DIR when it holds a theme, else the data folders (~/.local/share, /usr/share).
 QString Decoration::themeDirectory()
 {
-	const QByteArray fromEnvironment = qgetenv("B6_THEME_DIR");
-	if (!fromEnvironment.isEmpty())
-		return QString::fromLocal8Bit(fromEnvironment);
-	const QString found = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "b6-themes/b6+r", QStandardPaths::LocateDirectory);
-	return found;
+	const QString fromEnvironment = QString::fromLocal8Bit(qgetenv("B6_THEME_DIR"));
+	if (!fromEnvironment.isEmpty() && QFileInfo::exists(fromEnvironment + "/themerc"))
+		return fromEnvironment;
+	return QStandardPaths::locate(QStandardPaths::GenericDataLocation, "b6-themes/b6+r", QStandardPaths::LocateDirectory);
 }
 
 bool Decoration::init()
 {
-	if (!fTheme.load(themeDirectory()))
+	const QString directory = themeDirectory();
+	if (directory.isEmpty() || !fTheme.load(directory)) {
+		qWarning("b6xfwm: no theme found (B6_THEME_DIR=\"%s\", and none in the data folders under b6-themes/b6+r)",
+			qgetenv("B6_THEME_DIR").constData());
 		return false;
+	}
 
 	setOpaque(false);
 
