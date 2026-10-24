@@ -24,8 +24,12 @@ cmake --build build
 
 The plugin is built when `KDecoration3` and `KF6CoreAddons` are found.
 
+## Screenshots from Cachy OS
+<img width="861" height="542" alt="Image" src="https://github.com/user-attachments/assets/b094a351-ddfc-4168-a6e4-f934fe61fdb2" />
+<img width="823" height="547" alt="Image" src="https://github.com/user-attachments/assets/310b566d-bd53-4088-a045-c1a819a15c41" />
+
 ## Themes
-The theme pictures are **not** in this repository: `themes/` is ignored. Take them from the xfwm4-themes collection (GPL-3). A theme is a folder with a `themerc`. The plugin lists every one it finds in:
+Themes are GPL-3. A theme is a folder with a `themerc`. The plugin lists every one it finds in:
 
 - `~/.local/share/b6-themes/<name>` and `/usr/share/b6-themes/<name>`, and
 - the folders in `B6_THEMES_PATH` (a colon separated list), for trying themes without installing them.
