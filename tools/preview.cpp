@@ -79,6 +79,8 @@ int main(int argc, char** argv)
 	p = base; p.pressed = Maximize; cases << drawCase(theme, p, desktop);
 	p = base; p.active = false; p.hovered = Close; cases << drawCase(theme, p, desktop);
 	p = base; p.title = ""; cases << drawCase(theme, p, desktop);
+	p = base; p.maximized = true; p.clientSize = QSize(420, 120); p.title = "Maximized window"; p.toggled[Maximize] = true; cases << drawCase(theme, p, desktop);
+	p = base; p.has[Shade] = p.has[Stick] = true; p.toggled[Stick] = true; p.hovered = Hide; cases << drawCase(theme, p, desktop);
 
 	int width = 0, height = 0;
 	for (const QImage& c : cases) {

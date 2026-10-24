@@ -65,15 +65,19 @@ bool XfwmTheme::load(const QString& directory)
 		loadPiece(fBottomRight[s], "bottom-right-" + state);
 	}
 
-	static const char* const names[ButtonCount] = {"close", "maximize", "hide", "shade"};
+	static const char* const names[ButtonCount] = {"close", "maximize", "hide", "shade", "menu", "stick"};
 	static const char* const suffixes[StateCount] = {"-active", "-inactive", "-prelight", "-prelight-inactive", "-pressed"};
 	for (int b = 0; b < ButtonCount; b++) {
-		for (int s = 0; s < StateCount; s++)
+		for (int s = 0; s < StateCount; s++) {
 			loadPiece(fButton[b][s], QString(names[b]) + suffixes[s]);
+			loadPiece(fButtonToggled[b][s], QString(names[b]) + "-toggled" + suffixes[s]);
+		}
 		// a theme without a picture for a state uses the one of the plain state
 		for (int s = Inactive; s < StateCount; s++) {
 			if (fButton[b][s].isNull())
 				fButton[b][s] = fButton[b][s == PrelightInactive ? Inactive : Active];
+			if (fButtonToggled[b][s].isNull() && !fButtonToggled[b][Active].isNull())
+				fButtonToggled[b][s] = fButtonToggled[b][s == PrelightInactive ? Inactive : Active];
 		}
 	}
 

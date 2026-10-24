@@ -12,7 +12,8 @@
 
 namespace B6 {
 
-enum Button { Close = 0, Maximize, Hide, Shade, ButtonCount };
+// the letters of a themerc button_layout: C close, M maximize, H hide (minimize), S shade, O window menu, T stick (on all desktops)
+enum Button { Close = 0, Maximize, Hide, Shade, Menu, Stick, ButtonCount };
 enum ButtonState { Active = 0, Inactive, Prelight, PrelightInactive, Pressed, StateCount };
 
 // one picture of the frame; "None" pixels of an XPM are transparent
@@ -41,7 +42,11 @@ public:
 	const Piece& bottom(bool active) const { return fBottom[active ? 0 : 1]; }
 	const Piece& bottomLeft(bool active) const { return fBottomLeft[active ? 0 : 1]; }
 	const Piece& bottomRight(bool active) const { return fBottomRight[active ? 0 : 1]; }
-	const Piece& button(Button button, ButtonState state) const { return fButton[button][state]; }
+	// a button's picture; the toggled one is for a window that is maximized, shaded or on all desktops (xfwm4's "-toggled" files)
+	const Piece& button(Button button, ButtonState state, bool toggled = false) const
+	{
+		return toggled && !fButtonToggled[button][state].isNull() ? fButtonToggled[button][state] : fButton[button][state];
+	}
 
 	// measurements taken from the pictures
 	int titleHeight() const { return fTitleHeight; }
@@ -68,6 +73,7 @@ private:
 	QString fName;
 	Piece fTopLeft[2], fTopRight[2], fTitle[5][2], fLeft[2], fRight[2], fBottom[2], fBottomLeft[2], fBottomRight[2];
 	Piece fButton[ButtonCount][StateCount];
+	Piece fButtonToggled[ButtonCount][StateCount];
 
 	int fTitleHeight = 24;
 	int fButtonWidth = 12;

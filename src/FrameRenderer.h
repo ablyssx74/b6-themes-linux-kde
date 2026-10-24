@@ -22,7 +22,9 @@ struct FrameParams {
 	bool active = true;
 	QString title;
 	QFont font;
-	bool hasClose = true, hasMaximize = true, hasHide = true, hasShade = false;
+	bool maximized = false;			// the frame is the bar only: no sides, no bottom
+	bool has[ButtonCount] = {true, true, true, false, true, false};		// close, maximize, hide, shade, menu, stick
+	bool toggled[ButtonCount] = {};	// maximized, shaded, on all desktops
 	int hovered = -1;		// a Button, or -1
 	int pressed = -1;
 };

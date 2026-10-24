@@ -8,20 +8,9 @@ namespace B6 {
 
 namespace {
 
-struct Placed {
-	Button button;
-	bool present;
-};
-
 bool present(const FrameParams& p, Button b)
 {
-	switch (b) {
-		case Close: return p.hasClose;
-		case Maximize: return p.hasMaximize;
-		case Hide: return p.hasHide;
-		case Shade: return p.hasShade;
-		default: return false;
-	}
+	return b >= 0 && b < ButtonCount && p.has[b];
 }
 
 // the letters of a button layout, split at the '|': buttons to the left and to the right of it, in order
@@ -38,6 +27,8 @@ void splitLayout(const XfwmTheme& theme, const FrameParams& p, QList<Button>& le
 			case 'M': b = Maximize; break;
 			case 'H': b = Hide; break;
 			case 'S': b = Shade; break;
+			case 'O': b = Menu; break;
+			case 'T': b = Stick; break;
 			default: break;
 		}
 		if (b == ButtonCount || !present(p, b))
@@ -78,9 +69,10 @@ FrameLayout computeLayout(const XfwmTheme& theme, const FrameParams& params)
 {
 	FrameLayout layout;
 	const bool active = params.active;
-	const int leftWidth = theme.left(active).width();
-	const int rightWidth = theme.right(active).width();
-	const int bottomHeight = theme.bottom(active).height();
+	// a maximized window has the bar and nothing else: no sides, no bottom
+	const int leftWidth = params.maximized ? 0 : theme.left(active).width();
+	const int rightWidth = params.maximized ? 0 : theme.right(active).width();
+	const int bottomHeight = params.maximized ? 0 : theme.bottom(active).height();
 	const int titleHeight = theme.titleHeight();
 
 	layout.borders = QMargins(leftWidth, titleHeight, rightWidth, bottomHeight);
@@ -88,7 +80,7 @@ FrameLayout computeLayout(const XfwmTheme& theme, const FrameParams& params)
 	layout.client = QRect(QPoint(leftWidth, titleHeight), params.clientSize);
 
 	const int width = layout.size.width();
-	layout.topRightX = width - theme.topRight(active).width();
+	layout.topRightX = params.maximized ? width : width - theme.topRight(active).width();
 
 	QList<Button> leftButtons, rightButtons;
 	splitLayout(theme, params, leftButtons, rightButtons);
@@ -159,12 +151,17 @@ FrameLayout computeLayout(const XfwmTheme& theme, const FrameParams& params)
 	QRect visible;
 	visible = visible.united(outer(theme.topLeft(active), 0, 0));
 	visible = visible.united(outer(theme.title(2, active), layout.fillLeft, 0));
-	visible = visible.united(outer(theme.topRight(active), layout.topRightX, 0));
-	visible = visible.united(outer(theme.left(active), 0, layout.client.top()));
-	visible = visible.united(outer(theme.right(active), layout.client.right() + 1 - theme.right(active).opaque.left(), layout.client.top()));
-	visible = visible.united(outer(theme.bottomLeft(active), 0, full.height() - theme.bottomLeft(active).height()));
-	visible = visible.united(outer(theme.bottomRight(active), width - theme.bottomRight(active).width(), full.height() - theme.bottomRight(active).height()));
-	visible = visible.united(outer(theme.bottom(active), theme.bottomLeft(active).width(), full.height() - theme.bottom(active).height()));
+	if (params.maximized) {
+		const Piece& rest = theme.title(4, active);
+		visible = visible.united(QRect(0, rest.opaque.top(), width, rest.opaque.height()));
+	} else {
+		visible = visible.united(outer(theme.topRight(active), layout.topRightX, 0));
+		visible = visible.united(outer(theme.left(active), 0, layout.client.top()));
+		visible = visible.united(outer(theme.right(active), layout.client.right() + 1 - theme.right(active).opaque.left(), layout.client.top()));
+		visible = visible.united(outer(theme.bottomLeft(active), 0, full.height() - theme.bottomLeft(active).height()));
+		visible = visible.united(outer(theme.bottomRight(active), width - theme.bottomRight(active).width(), full.height() - theme.bottomRight(active).height()));
+		visible = visible.united(outer(theme.bottom(active), theme.bottomLeft(active).width(), full.height() - theme.bottom(active).height()));
+	}
 	layout.origin = visible.topLeft();
 	layout.size = visible.size();
 	const QRect client = layout.toDecoration(layout.client);
@@ -190,18 +187,21 @@ void paintFrame(QPainter& painter, const XfwmTheme& theme, const FrameParams& pa
 	painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
 	// the sides and the bottom, then the bottom corners over them
-	blitTiled(painter, left, QRect(0, client.top(), left.width(), client.height()), false);
-	blitTiled(painter, right, QRect(client.right() + 1 - right.opaque.left(), client.top(), right.width(), client.height()), false);
-	const int bottomY = client.bottom() + 1 - bottom.opaque.top();
-	blitTiled(painter, bottom, QRect(bottomLeft.width(), bottomY, width - bottomLeft.width() - bottomRight.width(), bottom.height()), true);
-	blit(painter, bottomLeft, 0, height - bottomLeft.height());
-	blit(painter, bottomRight, width - bottomRight.width(), height - bottomRight.height());
+	if (!params.maximized) {
+		blitTiled(painter, left, QRect(0, client.top(), left.width(), client.height()), false);
+		blitTiled(painter, right, QRect(client.right() + 1 - right.opaque.left(), client.top(), right.width(), client.height()), false);
+		const int bottomY = client.bottom() + 1 - bottom.opaque.top();
+		blitTiled(painter, bottom, QRect(bottomLeft.width(), bottomY, width - bottomLeft.width() - bottomRight.width(), bottom.height()), true);
+		blit(painter, bottomLeft, 0, height - bottomLeft.height());
+		blit(painter, bottomRight, width - bottomRight.width(), height - bottomRight.height());
+	}
 
 	// the bar after the tab, and its right end
 	const Piece& rest = theme.title(4, active);
 	if (layout.restStart < layout.topRightX)
 		blitTiled(painter, rest, QRect(layout.restStart, 0, layout.topRightX - layout.restStart, rest.height()), true);
-	blit(painter, theme.topRight(active), layout.topRightX, 0);
+	if (!params.maximized)
+		blit(painter, theme.topRight(active), layout.topRightX, 0);
 
 	// the tab
 	int x = 0;
@@ -250,7 +250,7 @@ void paintFrame(QPainter& painter, const XfwmTheme& theme, const FrameParams& pa
 			state = active ? Prelight : PrelightInactive;
 		else
 			state = active ? Active : Inactive;
-		blit(painter, theme.button(Button(b), state), layout.buttons[b].left(), layout.buttons[b].top());
+		blit(painter, theme.button(Button(b), state, params.toggled[b]), layout.buttons[b].left(), layout.buttons[b].top());
 	}
 	painter.restore();
 }
