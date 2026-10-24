@@ -164,7 +164,11 @@ FrameLayout computeLayout(const XfwmTheme& theme, const FrameParams& params)
 	}
 	layout.origin = visible.topLeft();
 	layout.size = visible.size();
-	const QRect client = layout.toDecoration(layout.client);
+	QRect client = layout.toDecoration(layout.client);
+	// (a maximized window's pictures are only the bar: the client area below it is part of the window all the same, and the
+	// borders at the sides and the bottom are none)
+	if (params.maximized)
+		layout.size.setHeight(qMax(layout.size.height(), client.bottom() + 1));
 	layout.borders = QMargins(client.left(), client.top(), layout.size.width() - client.right() - 1, layout.size.height() - client.bottom() - 1);
 	layout.titleBar = QRect(0, 0, layout.size.width(), client.top());
 	return layout;
