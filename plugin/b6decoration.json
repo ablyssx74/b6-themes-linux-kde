@@ -1,0 +1,14 @@
+{
+    "KPlugin": {
+        "Description": "Window frames from xfwm4 themes (b6+r first), drawn the way the Haiku port of them does",
+        "EnabledByDefault": true,
+        "Name": "B6 (xfwm4)"
+    },
+    "org.kde.kdecoration3": {
+        "blur": false,
+        "recommendedBorderSize": "None",
+        "styles": [
+            "titled"
+        ]
+    }
+}
