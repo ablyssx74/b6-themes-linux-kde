@@ -168,7 +168,7 @@ FrameParams Decoration::params() const
 void Decoration::updateLayout()
 {
 	fLayout = computeLayout(fTheme, params());
-	setBorders(QMarginsF(fLayout.borders));
+	setBorders(QMarginsF(frameBorders(fTheme, params())));
 	setTitleBar(QRectF(fLayout.titleBar));
 	for (int b = 0; b < ButtonCount; b++) {
 		if (!fButtons[b])

@@ -174,6 +174,14 @@ FrameLayout computeLayout(const XfwmTheme& theme, const FrameParams& params)
 	return layout;
 }
 
+QMargins frameBorders(const XfwmTheme& theme, const FrameParams& params)
+{
+	// a client as big as the biggest picture of any theme, so that none of them sticks out over it
+	FrameParams reference = params;
+	reference.clientSize = QSize(qMax(params.clientSize.width(), 1024), qMax(params.clientSize.height(), 1024));
+	return computeLayout(theme, reference).borders;
+}
+
 void paintFrame(QPainter& painter, const XfwmTheme& theme, const FrameParams& params, const FrameLayout& layout)
 {
 	const bool active = params.active;

@@ -48,6 +48,11 @@ struct FrameLayout {
 };
 
 FrameLayout computeLayout(const XfwmTheme& theme, const FrameParams& params);
+
+// The borders KWin lays the window out with. They belong to the theme (and to the maximized state) alone: computeLayout() finds them
+// from the pictures, which stick out over a client that is too small (a window that is being made has no size yet: 0x0), and borders
+// that change with the client's size made the frame and the client disagree, so that a window grew every time it was opened.
+QMargins frameBorders(const XfwmTheme& theme, const FrameParams& params);
 void paintFrame(QPainter& painter, const XfwmTheme& theme, const FrameParams& params, const FrameLayout& layout);
 
 }	// namespace B6
